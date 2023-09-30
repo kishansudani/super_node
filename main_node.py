@@ -1,13 +1,14 @@
 import socket
 import threading
 import time
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
 BAN_THRESHOLD = 10
 PING_INTERVAL = 5
 DATA_INTERVAL = 2
 REWARD = 10
 VERSION = "1.0"
+PENALTY_AMOUNT = 5
 
 ban_count = {}
 follower_queue = []
@@ -28,7 +29,7 @@ def handle_client(client_socket, addr):
         ban_count[addr] = 0
         formatted_addr = f'{addr[0]}:{addr[1]}'  # Format the address
 
-        received_version, _ = data.split('|')
+        received_version, _, message = data.split('|')
         if received_version != VERSION:
             print(f"Follower version {received_version} does not match main node version {VERSION}. Disconnecting.")
             break
@@ -64,7 +65,6 @@ def ping_nodes():
                     follower_queue.remove(addr)
                     del ban_count[addr]
 
-
 def instruct_follower():
     global follower_queue
 
@@ -77,6 +77,11 @@ def instruct_follower():
                         follower.send(b"SEND_DATA")
                     except:
                         print(f"{follower_queue}")
+
+def penalize_follower(address):
+    formatted_addr = f'{address[0]}:{address[1]}'
+    if formatted_addr in follower_rewards:
+        follower_rewards[formatted_addr] -= PENALTY_AMOUNT
 
 app = Flask(__name__)
 
@@ -93,12 +98,35 @@ def get_node():
 def get_rewards():
     return jsonify({'rewards': follower_rewards})
 
+@app.route('/claim', methods=['POST'])
+def claim_rewards():
+    data = request.get_json()
+
+    if 'amount' not in data:
+        return jsonify({'error': 'Invalid request'}), 400
+
+    requester_port = request.environ.get('REMOTE_PORT')
+    address = request.remote_addr
+    amount = data['amount']
+
+    formatted_addr = f'{address}:{requester_port}'
+
+    print(f'formatted_addr: {formatted_addr} >>>>> {formatted_addr in follower_rewards} ')
+    if formatted_addr in follower_rewards and follower_rewards[formatted_addr] >= amount:
+        follower_rewards[formatted_addr] -= amount
+        return jsonify({'success': f'Claimed {amount} rewards successfully'}), 200
+    else:
+        # Penalize the follower node for invalid claims
+        penalize_follower(address)
+        return jsonify({'error': 'Invalid claim or insufficient rewards'}), 400
+
+
 def main():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(("127.0.0.1", 5556))
+    server.bind(("127.0.0.1", 5555))
     server.listen(5)
 
-    print("Main Node listening on port 5556")
+    print("Main Node listening on port 5555")
 
     threading.Thread(target=ping_nodes).start()
     threading.Thread(target=instruct_follower).start()
