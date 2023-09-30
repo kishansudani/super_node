@@ -10,6 +10,7 @@ DATA_INTERVAL = 2
 ban_count = {}
 follower_queue = []
 
+main_node_version = "1.0"
 
 follower_rewards = {}
 
@@ -27,6 +28,12 @@ def handle_client(client_socket, addr):
         # Reset ban count for the node
         ban_count[addr] = 0
         formatted_addr = f'{addr[0]}:{addr[1]}'  # Format the address
+
+        received_version, received_data = data.split('|')
+        if received_version != main_node_version:
+            print(f"Follower version {received_version} does not match main node version {main_node_version}. Disconnecting.")
+            break
+
         if formatted_addr in follower_rewards:
             follower_rewards[formatted_addr] += 10
         else:
@@ -89,10 +96,10 @@ def get_rewards():
 
 def main():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(("127.0.0.1", 5555))
+    server.bind(("127.0.0.1", 5556))
     server.listen(5)
 
-    print("Main Node listening on port 5555")
+    print("Main Node listening on port 5556")
 
     threading.Thread(target=ping_nodes).start()
     threading.Thread(target=instruct_follower).start()
