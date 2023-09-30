@@ -15,5 +15,5 @@ def send_data(version):
             print(f"Sent data to main node: {data_to_send}")
 
 if __name__ == "__main__":
-    follower_version = "1.1"
+    follower_version = "1.0"
     send_data(follower_version)

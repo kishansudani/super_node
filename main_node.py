@@ -6,12 +6,11 @@ from flask import Flask, jsonify
 BAN_THRESHOLD = 10
 PING_INTERVAL = 5
 DATA_INTERVAL = 2
+REWARD = 10
+VERSION = "1.0"
 
 ban_count = {}
 follower_queue = []
-
-main_node_version = "1.0"
-
 follower_rewards = {}
 
 def handle_client(client_socket, addr):
@@ -29,15 +28,15 @@ def handle_client(client_socket, addr):
         ban_count[addr] = 0
         formatted_addr = f'{addr[0]}:{addr[1]}'  # Format the address
 
-        received_version, received_data = data.split('|')
-        if received_version != main_node_version:
-            print(f"Follower version {received_version} does not match main node version {main_node_version}. Disconnecting.")
+        received_version, _ = data.split('|')
+        if received_version != VERSION:
+            print(f"Follower version {received_version} does not match main node version {VERSION}. Disconnecting.")
             break
 
         if formatted_addr in follower_rewards:
-            follower_rewards[formatted_addr] += 10
+            follower_rewards[formatted_addr] += REWARD
         else:
-            follower_rewards[formatted_addr] = 10
+            follower_rewards[formatted_addr] = REWARD
 
 
     print(f"Connection from {addr} closed")
