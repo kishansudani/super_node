@@ -4,6 +4,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 import hashlib
 
+NODE_NAME="follower1"
 
 def generate_key_pair():
     private_key = rsa.generate_private_key(
@@ -67,7 +68,7 @@ def generate_admin_key():
     save_key_to_file(private_key, '../pem/private_key.pem')
     save_key_to_file(public_key, '../pem/public_key.pem', is_private=False)
 
-generate_one_key("follower1")
+generate_one_key(NODE_NAME)
 
 def main():
     loaded_private_key = load_key_from_file('../pem/private_key.pem')

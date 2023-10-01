@@ -52,3 +52,35 @@
     - Create Bootstrap node for new node(validator and follower)
 - Use GRPC to communicate between two node
 - Create Raft system for super node.
+
+
+
+### How to run
+```javascript
+pip install -r requirements.txt
+```
+
+- Generate new key if you don't have
+    - open encryption.py file and rename `NODE_NAME` with your name for follower node.
+```javascript
+cd test
+nano encryption.py
+python encryption.py
+```
+
+- start supernode
+```javascript
+cd ..
+python main.py
+```
+
+- open follower.py from follower folder
+```javascript
+nano follower/follower_node.py
+```
+- Find `node_name` varibale and change it's value which you have set in `NODE_NAME`.
+
+- start follower node
+```javascript
+python follower/follower_node.py
+```
