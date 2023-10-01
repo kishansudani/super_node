@@ -1,21 +1,20 @@
 import hashlib
-import json
 import socket
 import threading
-import time
 import requests
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa, padding
-from cryptography.hazmat.primitives import hashes
 
-
-super_node_url = "http://127.0.0.1:5557/claim"
 version = "1.0"
-node_name = 'follower2'
-sdata = '2'
-api_port = 5559
+node_name = 'follower1'
+sdata = '1'
+api_host = '127.0.0.1'
+api_port = 5558
+SUPER_NODE_IP = '127.0.0.1'
+SUPER_NODE_PORT = 5555
+SUPER_NODE_API_PORT = 5557
+super_node_url_claim_url = f"http://{SUPER_NODE_IP}:{SUPER_NODE_API_PORT}/claim"
 
 
 def load_key_from_file(filename, is_private=True):
@@ -44,7 +43,7 @@ def generate_40_char_address(data):
     return '0x'+ address
 
 def createNodeKey():
-    key = load_key_from_file(f'./pem/{node_name}_public_key.pem', is_private=False)
+    key = load_key_from_file(f'../pem/{node_name}_public_key.pem', is_private=False)
     user_pub_key_str = key.public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo
@@ -61,7 +60,7 @@ def send_data():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     while True:
         try:
-            client.connect(("127.0.0.1", 5555))
+            client.connect((SUPER_NODE_IP, SUPER_NODE_PORT))
             break
         except Exception as e:
             print(f"Error connecting to the super node: {e}")
@@ -79,7 +78,7 @@ app = Flask(__name__)
 def make_claim_request(amount):
     claim_request = {'amount': amount, 'address': key}
     try:
-        response = requests.post(super_node_url, json=claim_request)
+        response = requests.post(super_node_url_claim_url, json=claim_request)
         if response.status_code == 200:
             print(f"Claim successful. Response from super node: {response.json()}")
         else:
@@ -90,9 +89,7 @@ def make_claim_request(amount):
 
 @app.route('/claim', methods=['GET'])
 def claim_rewards():
-
     amount = 10
-
     threading.Thread(target=make_claim_request, args=(amount,)).start()
 
     return jsonify({'success': 'Claim request sent'}), 200
@@ -100,7 +97,7 @@ def claim_rewards():
 
 def main():
     threading.Thread(target=send_data).start()
-    threading.Thread(target=app.run, kwargs={'host':'127.0.0.1', 'port':api_port}).start()
+    threading.Thread(target=app.run, kwargs={'host':api_host, 'port':api_port}).start()
 
 if __name__ == "__main__":
     main()
