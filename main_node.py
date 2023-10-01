@@ -18,28 +18,6 @@ ban_count = {}
 follower_queue = []
 follower_rewards = {}
 
-# def decrypt_address(ciphertext): 
-#     filename = './pem/private_key.pem'
-#     with open(filename, 'rb') as f:
-#         pem_data = f.read()
-
-#     admin = serialization.load_pem_private_key(
-#         pem_data,
-#         password=None,
-#         backend=default_backend()
-#     )
-
-#     decrypted_message = admin.decrypt(
-#         ciphertext,
-#         padding.OAEP(
-#             mgf=padding.MGF1(algorithm=hashes.SHA256()), 
-#             algorithm=hashes.SHA256(),
-#             label=None
-#         )
-#     ).decode('utf-8')
-
-#     return decrypted_message
-
 def handle_client(client_socket, addr):
     global ban_count, follower_rewards
 
@@ -51,16 +29,9 @@ def handle_client(client_socket, addr):
 
         # Reset ban count for the node
         ban_count[addr] = 0
-        # formatted_addr = f'{addr[0]}:{addr[1]}'  # Format the address
 
         received_version, _, address = data.split('|')
         formatted_addr = f'{addr[0]}:{address}'  # Format the address
-
-        # received_version, _, *message_parts = data.split('|')
-        # message = '|'.join(message_parts)
-        
-        # print('Message: \n\n\n', type(message), '\n\n\n')
-        # message = decrypt_address(message)
 
 
         if received_version != VERSION:
@@ -140,7 +111,6 @@ def claim_rewards():
     if 'address' not in data:
         return jsonify({'error': 'No address defined'}), 400
 
-    # requester_port = request.environ.get('REMOTE_PORT')
     ip = request.remote_addr
     amount = data['amount']
     address = data['address']
