@@ -2,6 +2,10 @@ import socket
 import threading
 import time
 from flask import Flask, jsonify, request
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives import hashes
 
 BAN_THRESHOLD = 10
 PING_INTERVAL = 5
@@ -14,6 +18,28 @@ ban_count = {}
 follower_queue = []
 follower_rewards = {}
 
+# def decrypt_address(ciphertext): 
+#     filename = './pem/private_key.pem'
+#     with open(filename, 'rb') as f:
+#         pem_data = f.read()
+
+#     admin = serialization.load_pem_private_key(
+#         pem_data,
+#         password=None,
+#         backend=default_backend()
+#     )
+
+#     decrypted_message = admin.decrypt(
+#         ciphertext,
+#         padding.OAEP(
+#             mgf=padding.MGF1(algorithm=hashes.SHA256()), 
+#             algorithm=hashes.SHA256(),
+#             label=None
+#         )
+#     ).decode('utf-8')
+
+#     return decrypted_message
+
 def handle_client(client_socket, addr):
     global ban_count, follower_rewards
 
@@ -23,13 +49,20 @@ def handle_client(client_socket, addr):
         if not data:
             break
 
-        print(f"Received data from {addr}: {data}")
-
         # Reset ban count for the node
         ban_count[addr] = 0
-        formatted_addr = f'{addr[0]}:{addr[1]}'  # Format the address
+        # formatted_addr = f'{addr[0]}:{addr[1]}'  # Format the address
 
-        received_version, _, message = data.split('|')
+        received_version, _, address = data.split('|')
+        formatted_addr = f'{addr[0]}:{address}'  # Format the address
+
+        # received_version, _, *message_parts = data.split('|')
+        # message = '|'.join(message_parts)
+        
+        # print('Message: \n\n\n', type(message), '\n\n\n')
+        # message = decrypt_address(message)
+
+
         if received_version != VERSION:
             print(f"Follower version {received_version} does not match main node version {VERSION}. Disconnecting.")
             break
@@ -38,7 +71,6 @@ def handle_client(client_socket, addr):
             follower_rewards[formatted_addr] += REWARD
         else:
             follower_rewards[formatted_addr] = REWARD
-
 
     print(f"Connection from {addr} closed")
     client_socket.close()
@@ -103,13 +135,17 @@ def claim_rewards():
     data = request.get_json()
 
     if 'amount' not in data:
-        return jsonify({'error': 'Invalid request'}), 400
+        return jsonify({'error': 'No amount defined'}), 400
+    
+    if 'address' not in data:
+        return jsonify({'error': 'No address defined'}), 400
 
-    requester_port = request.environ.get('REMOTE_PORT')
-    address = request.remote_addr
+    # requester_port = request.environ.get('REMOTE_PORT')
+    ip = request.remote_addr
     amount = data['amount']
+    address = data['address']
 
-    formatted_addr = f'{address}:{requester_port}'
+    formatted_addr = f'{ip}:{address}'
 
     print(f'formatted_addr: {formatted_addr} >>>>> {formatted_addr in follower_rewards} ')
     if formatted_addr in follower_rewards and follower_rewards[formatted_addr] >= amount:
@@ -117,7 +153,7 @@ def claim_rewards():
         return jsonify({'success': f'Claimed {amount} rewards successfully'}), 200
     else:
         # Penalize the follower node for invalid claims
-        penalize_follower(address)
+        penalize_follower(formatted_addr)
         return jsonify({'error': 'Invalid claim or insufficient rewards'}), 400
 
 

@@ -1,14 +1,59 @@
+import hashlib
 import json
 import socket
 import threading
 import time
-from flask import Flask, jsonify, request
 import requests
+from flask import Flask, jsonify, request
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives import hashes
+
 
 super_node_url = "http://127.0.0.1:5557/claim"
 version = "1.0"
-unique_address = '3c0995799f067215f44397ec0072cdca4fb9c200'
-secret_key = '8075d41b1fe853fa44a23ae331fa2b0333cc934779ba888829ad04111e792c1b'
+node_name = 'follower1'
+sdata = '1'
+api_port = 5558
+
+def load_key_from_file(filename, is_private=True):
+    with open(filename, 'rb') as f:
+        pem_data = f.read()
+
+    if is_private:
+        key = serialization.load_pem_private_key(
+            pem_data,
+            password=None,
+            backend=default_backend()
+        )
+    else:
+        key = serialization.load_pem_public_key(
+            pem_data,
+            backend=default_backend()
+        )
+
+    return key
+
+def generate_40_char_address(data):
+    data_bytes = bytes(data, 'utf-8')
+    hash_object = hashlib.sha256(data_bytes)
+    hash_hex = hash_object.hexdigest()
+    address = hash_hex[:40]
+    return '0x'+ address
+
+def createNodeKey():
+    key = load_key_from_file(f'./pem/{node_name}_public_key.pem', is_private=False)
+    user_pub_key_str = key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    ).decode('utf-8')
+
+    user_address = generate_40_char_address(user_pub_key_str)
+
+    return user_address
+
+key = createNodeKey()
 
 def send_data():
     global version
@@ -22,17 +67,16 @@ def send_data():
 
     while True:
         data = client.recv(1024).decode()
-
         if data == "SEND_DATA":
             # Send data to main node
-            data_to_send = f"{version}|1|"  # Replace with your data
+            data_to_send = f"{version}|{sdata}|{key}"  # Replace with your data
             client.send(data_to_send.encode())
             print(f"Sent data to main node: {data_to_send}")
 
 app = Flask(__name__)
 
 def make_claim_request(amount):
-    claim_request = {'amount': amount}
+    claim_request = {'amount': amount, 'address': key}
     try:
         response = requests.post(super_node_url, json=claim_request)
         if response.status_code == 200:
@@ -45,24 +89,17 @@ def make_claim_request(amount):
 
 @app.route('/claim', methods=['GET'])
 def claim_rewards():
-    # data = request.get_json()
-
-    # if 'amount' not in data:
-    #     return jsonify({'error': 'Invalid request'}), 400
-
-    # amount = data['amount']
 
     amount = 10
 
-    # Example of making a claim request to the super node through the Flask API
     threading.Thread(target=make_claim_request, args=(amount,)).start()
 
-    return jsonify({'success': 'Claim request received'}), 200
+    return jsonify({'success': 'Claim request sent'}), 200
 
 
 def main():
     threading.Thread(target=send_data).start()
-    threading.Thread(target=app.run, kwargs={'host':'127.0.0.1', 'port':5558}).start()
+    threading.Thread(target=app.run, kwargs={'host':'127.0.0.1', 'port':api_port}).start()
 
 if __name__ == "__main__":
     main()
