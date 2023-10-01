@@ -27,6 +27,7 @@ def handle_client(client_socket, addr):
         data = client_socket.recv(1024).decode()
 
         if not data:
+            follower_rewards[formatted_addr] -= PENALTY_AMOUNT
             break
 
         # Reset ban count for the node

@@ -20,17 +20,21 @@ def main():
     threading.Thread(target=app.run, kwargs={'host':API_ADDRESS, 'port':API_PORT}).start()
 
     while True:
-        client_socket, addr = server.accept()
-        print(f"Connection from {addr} established")
+        try:
+            client_socket, addr = server.accept()
+            print(f"Connection from {addr} established")
 
-        # Initialize ban count for the node
-        ban_count[addr] = 0
+            # Initialize ban count for the node
+            ban_count[addr] = 0
 
-        # Add client socket to the follower queue
-        follower_queue.append(client_socket)
+            # Add client socket to the follower queue
+            follower_queue.append(client_socket)
 
-        # Start a new thread to handle the client
-        threading.Thread(target=handle_client, args=(client_socket, addr)).start()
+            # Start a new thread to handle the client
+            threading.Thread(target=handle_client, args=(client_socket, addr)).start()
+        except KeyboardInterrupt:
+            break
+
 
 if __name__ == "__main__":
     main()

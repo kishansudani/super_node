@@ -84,7 +84,3 @@ def add_node():
 
     return jsonify({'success': 'Node added successfully'}), 200
 
-
-
-# if __name__ == '__main__':
-#     threading.Thread(target=app.run, kwargs={'host': API_ADDRESS, 'port':API_PORT}).start()
