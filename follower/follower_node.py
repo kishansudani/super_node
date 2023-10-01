@@ -13,7 +13,7 @@ api_host = '127.0.0.1'
 api_port = 5558
 SUPER_NODE_IP = '127.0.0.1'
 SUPER_NODE_PORT = 5555
-SUPER_NODE_API_PORT = 5557
+SUPER_NODE_API_PORT = 5777
 super_node_url_claim_url = f"http://{SUPER_NODE_IP}:{SUPER_NODE_API_PORT}/claim"
 
 
@@ -90,9 +90,11 @@ def make_claim_request(amount):
 @app.route('/claim', methods=['GET'])
 def claim_rewards():
     amount = 10
-    threading.Thread(target=make_claim_request, args=(amount,)).start()
-
-    return jsonify({'success': 'Claim request sent'}), 200
+    try:
+        threading.Thread(target=make_claim_request, args=(amount,)).start()
+        return jsonify({'success': 'Claim request sent'}), 200
+    except:
+        return jsonify({'success': 'Claim error'}), 400
 
 
 def main():
