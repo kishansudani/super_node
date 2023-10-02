@@ -3,6 +3,8 @@ import threading
 
 from super_node import handle_client, instruct_follower, ping_nodes, ban_count, follower_queue
 from api.supernode_api import app
+from database.client import new_client
+
 
 API_ADDRESS = '127.0.0.1'
 API_PORT = 5777

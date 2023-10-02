@@ -1,6 +1,6 @@
-import json
-import socket
 import time
+
+from database.client import new_client
 
 BAN_THRESHOLD = 10
 PING_INTERVAL = 5
@@ -26,29 +26,38 @@ def handle_client(client_socket, addr):
         data = client_socket.recv(1024).decode()
 
         if client_socket != follower_intervals[sequence_counter]:
-            spam_count[addr] += 1 
+            if addr in spam_count.keys():
+                spam_count[addr] += 1 
+            else:
+                spam_count[addr] = 0 
+
             if spam_count[addr] == MAX_SPAM_PING:
+                spam_count[addr] = 0 
                 break
 
         if not data:
             follower_rewards[formatted_addr] -= PENALTY_AMOUNT
             break
 
-        # Reset ban count for the node
-        ban_count[addr] = 0
-
-        received_version, _, address = data.split('|')
-        formatted_addr = f'{addr[0]}:{address}'  # Format the address
-
+        try:
+            received_version, _, address = data.split('|')
+        except:
+            print('Wrong Data')
+            break
 
         if received_version != VERSION:
             print(f"Follower version {received_version} does not match main node version {VERSION}. Disconnecting.")
             break
 
+        formatted_addr = f'{addr[0]}:{address}'  # Format the address
+
         if formatted_addr in follower_rewards:
             follower_rewards[formatted_addr] += REWARD
         else:
             follower_rewards[formatted_addr] = REWARD
+
+        # Reset ban count for the node
+        ban_count[addr] = 0
 
     print(f"Connection from {addr} closed")
     client_socket.close()
