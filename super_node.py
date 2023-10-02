@@ -106,7 +106,7 @@ def instruct_follower():
                     try:
                         sequence_counter += 1
                         follower_intervals[sequence_counter] = follower
-                        follower_intervals_collection.insert_one({str(sequence_counter): f"{follower.getpeername()[0]}:{follower.getpeername()[1]}"})
+                        follower_intervals_collection.insert_one({sequence_counter: f"{follower.getpeername()[0]}:{follower.getpeername()[1]}"})
                         follower.send(b"SEND_DATA")
                     except Exception as e:
                         print(f"{e}")
