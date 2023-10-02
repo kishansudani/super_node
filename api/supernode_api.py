@@ -25,8 +25,10 @@ def get_rewards():
 
 @app.route('/get_follower_intervals', methods=['GET'])
 def get_sequence_counter():
-    serializable_intervals =  {key: f'{val.getpeername()[0]}:{val.getpeername()[1]}' for key, val in follower_intervals.items()}
-    return jsonify(serializable_intervals)
+    data = []
+    for key, val in follower_intervals.items():
+        data.append({key: f'{val.getpeername()[0]}:{val.getpeername()[1]}'})
+    return jsonify({'value': data})
 
 @app.route('/claim', methods=['POST'])
 def claim_rewards():
