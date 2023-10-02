@@ -19,11 +19,6 @@ follower_intervals = {}
 
 all_nodes = []
 
-class Node:
-    def __init__(self, addr, is_validator=False):
-        self.addr = addr
-        self.is_validator = is_validator
-
 def handle_client(client_socket, addr):
     global ban_count, follower_rewards, all_nodes, sequence_counter, follower_intervals
 
@@ -63,43 +58,6 @@ def handle_client(client_socket, addr):
 
     if addr in ban_count:
         del ban_count[addr]
-
-def send_node_list_to_validator(new_validator_addr):
-    node_list = {
-        'all_nodes': [f'{node.addr}' for node in all_nodes]
-    }
-
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
-        try:
-            client_socket.connect(new_validator_addr)
-            client_socket.sendall(json.dumps(node_list).encode('utf-8'))
-            print(f"Sent node list to the new validator {new_validator_addr}")
-        except Exception as e:
-            print(f"Error sending node list to the new validator: {e}")
-
-def validate_and_store_data(data):
-    # Add logic here to validate and store data from validator nodes
-    print(f"Validating and storing data: {data}")
-    # to share the data
-    '''
-    if any(node.addr == formatted_addr and node.is_validator for node in all_nodes):
-            validate_and_store_data(data)
-    '''
-
-def send_data_to_validator_node(data, validator_node_addr):
-    data_json = {
-        "key": "some_key",
-        "value": "some_value",
-        "timestamp": "2023-10-01T12:34:56"
-    }
-
-    # Serialize the data to JSON
-    data_str = json.dumps(data_json)
-
-    # Connect to the validator node and send the data
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
-        client_socket.connect(validator_node_addr)
-        client_socket.sendall(data_str.encode('utf-8'))
 
 def ping_nodes():
     global ban_count, follower_rewards
