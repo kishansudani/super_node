@@ -1,8 +1,9 @@
 # api/supernode_api.py
 
+import json
 import threading
 from flask import Flask, jsonify, request
-from super_node import follower_queue, follower_rewards, ban_count, all_nodes, penalize_follower, send_node_list_to_validator, Node
+from super_node import follower_queue, follower_rewards, ban_count, penalize_follower, follower_intervals
 
 API_ADDRESS = '127.0.0.1'
 API_PORT = 5777
@@ -21,6 +22,13 @@ def get_node():
 @app.route('/get_rewards', methods=['GET'])
 def get_rewards():
     return jsonify({'rewards': follower_rewards})
+
+@app.route('/get_follower_intervals', methods=['GET'])
+def get_sequence_counter():
+    data = []
+    for key, val in follower_intervals.items():
+        data.append({key: f'{val.getpeername()[0]}:{val.getpeername()[1]}'})
+    return jsonify({'value': data})
 
 @app.route('/claim', methods=['POST'])
 def claim_rewards():
@@ -45,42 +53,4 @@ def claim_rewards():
         # Penalize the follower node for invalid claims
         penalize_follower(formatted_addr)
         return jsonify({'error': 'Invalid claim or insufficient rewards'}), 400
-
-@app.route('/add_node', methods=['POST'])
-def add_node():
-    data = request.get_json()
-
-    if 'address' not in data:
-        return jsonify({'error': 'No address defined'}), 400
-    
-    if 'ip' not in data:
-        return jsonify({'error': 'No IP defined'}), 400
-    
-    if 'is_validator' not in data:
-        return jsonify({'error': 'No permission defined'}), 400
-    
-    if 'port' not in data:
-        return jsonify({'error': 'No permission defined'}), 400
-
-    ip = data['ip']
-    address = data['address']
-    is_validator = data['is_validator']
-    port = data['port']
-
-    formatted_addr = f'{ip}:{address}'
-
-    # Check if the node is already in the system
-    if any(node.addr == formatted_addr for node in all_nodes):
-        return jsonify({'error': 'Node already exists'}), 400
-
-    # Create a new Node instance
-    new_node = Node(formatted_addr, is_validator)
-
-    # Add the new node to the list of all nodes
-    all_nodes.append(new_node)
-
-    if is_validator:
-        threading.Thread(target=send_node_list_to_validator, args=(f'{ip}:{port}',)).start()
-
-    return jsonify({'success': 'Node added successfully'}), 200
 

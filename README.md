@@ -36,22 +36,22 @@
 
 
 ### To Do:
-- Store everything into DB
-- Check ping response from follower node that it's his turn to ping the super node or not, if not increase ban count.
-- Banned node can only allowed to join the system again after particular time.
-- Create proper reward system and use case for reward system.
-- Add validator node structor
-    - when user send data to the any node it forwards to the super node, super node will send data to validator node in sequnace.
-    - User can not directly send data to the super node.
-    - validator will sign the data and store it into the DB
-    - Validator then send this signed data to the other validators and follower node
-    - Other validator will verify this data and store it
-    - Follower node will store the data
-    - Create API for fetching stored data
-    - Create api for sending data to follower node and validator node
-    - Create Bootstrap node for new node(validator and follower)
-- Use GRPC to communicate between two node
-- Create Raft system for super node.
+- [ ] Store everything into DB
+- [X] Check ping response from follower node that it's his turn to ping the super node or not, if not increase ban count.
+- [ ] Banned node can only allowed to join the system again after particular time.
+- [ ] Create proper reward system and use case for reward system.
+- [ ] Add validator node structor
+    - [ ] when user send data to the any node it forwards to the super node, super node will send data to validator node in sequnace.
+    - [ ] User can not directly send data to the super node.
+    - [ ] validator will sign the data and store it into the DB
+    - [ ] Validator then send this signed data to the other validators and follower node
+    - [ ] Other validator will verify this data and store it
+    - [ ] Follower node will store the data
+    - [ ] Create API for fetching stored data
+    - [ ] Create api for sending data to follower node and validator node
+    - [ ] Create Bootstrap node for new node(validator and follower)
+- [ ] Use GRPC to communicate between two node
+- [ ] Create Raft system for super node.
 
 
 

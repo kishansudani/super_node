@@ -44,7 +44,7 @@ def generate_40_char_address(data):
     return '0x'+ address
 
 def createNodeKey():
-    key = load_key_from_file(f'../pem/{node_name}_public_key.pem', is_private=False)
+    key = load_key_from_file(f'./pem/{node_name}_public_key.pem', is_private=False)
     user_pub_key_str = key.public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo
