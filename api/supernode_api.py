@@ -1,8 +1,9 @@
 # api/supernode_api.py
 
+import json
 import threading
 from flask import Flask, jsonify, request
-from super_node import follower_queue, follower_rewards, ban_count, all_nodes, penalize_follower, send_node_list_to_validator, Node
+from super_node import follower_queue, follower_rewards, ban_count, all_nodes, penalize_follower, send_node_list_to_validator, Node, follower_intervals
 
 API_ADDRESS = '127.0.0.1'
 API_PORT = 5777
@@ -21,6 +22,11 @@ def get_node():
 @app.route('/get_rewards', methods=['GET'])
 def get_rewards():
     return jsonify({'rewards': follower_rewards})
+
+@app.route('/get_follower_intervals', methods=['GET'])
+def get_sequence_counter():
+    serializable_intervals =  {key: f'{val.getpeername()[0]}:{val.getpeername()[1]}' for key, val in follower_intervals.items()}
+    return jsonify(serializable_intervals)
 
 @app.route('/claim', methods=['POST'])
 def claim_rewards():

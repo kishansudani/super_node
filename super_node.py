@@ -8,10 +8,14 @@ DATA_INTERVAL = 2
 REWARD = 10
 VERSION = "1.0"
 PENALTY_AMOUNT = 5
+MAX_SPAM_PING = 10
+sequence_counter = 0
 
 ban_count = {}
+spam_count = {}
 follower_queue = []
 follower_rewards = {}
+follower_intervals = {}
 
 all_nodes = []
 
@@ -21,10 +25,15 @@ class Node:
         self.is_validator = is_validator
 
 def handle_client(client_socket, addr):
-    global ban_count, follower_rewards, all_nodes
+    global ban_count, follower_rewards, all_nodes, sequence_counter, follower_intervals
 
     while True:
         data = client_socket.recv(1024).decode()
+
+        if client_socket != follower_intervals[sequence_counter]:
+            spam_count[addr] += 1 
+            if spam_count[addr] == MAX_SPAM_PING:
+                break
 
         if not data:
             follower_rewards[formatted_addr] -= PENALTY_AMOUNT
@@ -68,7 +77,6 @@ def send_node_list_to_validator(new_validator_addr):
         except Exception as e:
             print(f"Error sending node list to the new validator: {e}")
 
-
 def validate_and_store_data(data):
     # Add logic here to validate and store data from validator nodes
     print(f"Validating and storing data: {data}")
@@ -110,14 +118,15 @@ def ping_nodes():
                     del ban_count[addr]
 
 def instruct_follower():
-    global follower_queue
-
+    global follower_queue, sequence_counter
     while True:
         if follower_queue:
             for follower in list(follower_queue):  # Create a copy of the list to avoid modification during iteration
                 time.sleep(DATA_INTERVAL)
                 if follower in follower_queue:
                     try:
+                        sequence_counter += 1
+                        follower_intervals[sequence_counter] = follower
                         follower.send(b"SEND_DATA")
                     except:
                         print(f"{follower_queue}")
