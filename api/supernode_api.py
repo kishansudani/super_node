@@ -3,7 +3,7 @@
 import json
 import threading
 from flask import Flask, jsonify, request
-from super_node import follower_queue, follower_rewards, ban_count, penalize_follower, follower_intervals
+from super_node import follower_queue, follower_rewards, ban_count, penalize_follower, follower_intervals, reward_collection
 
 API_ADDRESS = '127.0.0.1'
 API_PORT = 5777
@@ -48,6 +48,7 @@ def claim_rewards():
 
     if formatted_addr in follower_rewards and follower_rewards[formatted_addr] >= amount:
         follower_rewards[formatted_addr] -= amount
+        reward_collection.update_one({"node": formatted_addr},{"$inc": {"amount": amount * -1}})
         return jsonify({'success': f'Claimed {amount} rewards successfully'}), 200
     else:
         # Penalize the follower node for invalid claims
