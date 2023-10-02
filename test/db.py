@@ -27,3 +27,10 @@ collection.update_one(
     {"name": "John Doe"},
     {"$pull": {"favorite_colors": color_to_remove}}
 )
+
+
+
+
+# db.reward.find({node: "127.0.0.1:ANC"}, {"_id": 1})
+# db.reward.updateOne({node: "127.0.0.1:ANC"},{$inc: {"amount": 10}})
+# db.reward.insertOne({node: "127.0.0.1:ANC", amount: 10})

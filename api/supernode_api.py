@@ -3,7 +3,7 @@
 import json
 import threading
 from flask import Flask, jsonify, request
-from super_node import follower_queue, follower_rewards, ban_count, all_nodes, penalize_follower, follower_intervals
+from super_node import follower_queue, follower_rewards, ban_count, penalize_follower, follower_intervals
 
 API_ADDRESS = '127.0.0.1'
 API_PORT = 5777

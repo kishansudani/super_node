@@ -17,10 +17,12 @@ follower_queue = []
 follower_rewards = {}
 follower_intervals = {}
 
-all_nodes = []
+reward_collection = new_client('rewards')
+follower_intervals_collection = new_client('intervals')
+
 
 def handle_client(client_socket, addr):
-    global ban_count, follower_rewards, all_nodes, sequence_counter, follower_intervals
+    global ban_count, follower_rewards, sequence_counter, follower_intervals
 
     while True:
         data = client_socket.recv(1024).decode()
@@ -36,8 +38,12 @@ def handle_client(client_socket, addr):
                 break
 
         if not data:
-            follower_rewards[formatted_addr] -= PENALTY_AMOUNT
-            break
+            try:
+                follower_rewards[formatted_addr] -= PENALTY_AMOUNT
+                reward_collection.update_one({"node": formatted_addr},{"$inc": {"amount": PENALTY_AMOUNT * -1}})
+                break
+            except:
+                break
 
         try:
             received_version, _, address = data.split('|')
@@ -55,6 +61,12 @@ def handle_client(client_socket, addr):
             follower_rewards[formatted_addr] += REWARD
         else:
             follower_rewards[formatted_addr] = REWARD
+        
+        isExist = reward_collection.count_documents({"node": formatted_addr})
+        if isExist:
+            reward_collection.update_one({"node": formatted_addr},{"$inc": {"amount": 10}})
+        else:
+            reward_collection.insert_one({"node": formatted_addr, "amount": 10})
 
         # Reset ban count for the node
         ban_count[addr] = 0
@@ -94,9 +106,10 @@ def instruct_follower():
                     try:
                         sequence_counter += 1
                         follower_intervals[sequence_counter] = follower
+                        follower_intervals_collection.insert_one({str(sequence_counter): f"{follower.getpeername()[0]}:{follower.getpeername()[1]}"})
                         follower.send(b"SEND_DATA")
-                    except:
-                        print(f"{follower_queue}")
+                    except Exception as e:
+                        print(f"{e}")
 
 def penalize_follower(address):
     formatted_addr = f'{address[0]}:{address[1]}'
