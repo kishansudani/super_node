@@ -15,7 +15,6 @@ PENALTY_AMOUNT = 5
 MAX_SPAM_PING = 10
 sequence_counter = 0
 
-ban_count = {}
 spam_count = {}
 follower_queue = []
 follower_rewards = {}
@@ -27,7 +26,7 @@ follower_intervals_collection = new_client('intervals')
 
 
 def handle_client(client_socket, addr):
-    global ban_count, follower_rewards, sequence_counter, follower_intervals, next_connection_time
+    global follower_rewards, sequence_counter, follower_intervals, next_connection_time
     isBanned = False
 
     if addr in next_connection_time:
@@ -87,8 +86,6 @@ def handle_client(client_socket, addr):
         else:
             reward_collection.insert_one({"node": formatted_addr, "amount": 10})
 
-        # Reset ban count for the node
-        ban_count[addr] = 0
 
     print(f"Connection from {addr} closed")
     client_socket.close()
@@ -96,24 +93,28 @@ def handle_client(client_socket, addr):
     if client_socket in follower_queue:
         follower_queue.remove(client_socket)
 
-    if addr in ban_count:
-        del ban_count[addr]
 
 def ping_nodes():
-    global ban_count, follower_rewards
+    global follower_rewards
+    ban_count = {}
 
     while True:
         time.sleep(PING_INTERVAL)
 
         # Check for inactive nodes
-        for addr in list(ban_count.keys()):
-            if addr in follower_queue:
+        for addr in follower_queue:
+            try:
+                remote_addr = addr.getpeername()
+                ban_count[addr] = 0
+            except socket.error:
                 ban_count[addr] += 1
-
                 if ban_count[addr] >= BAN_THRESHOLD:
                     print(f"Node {addr} exceeded ban threshold. Disconnecting.")
                     follower_queue.remove(addr)
                     del ban_count[addr]
+            except Exception as e:
+                print(e)
+                follower_queue.remove(addr)               
 
 def set_sequence_counter():
     global sequence_counter
