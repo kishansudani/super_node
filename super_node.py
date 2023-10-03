@@ -1,5 +1,7 @@
 import time
 
+import pymongo
+
 from database.client import new_client
 
 BAN_THRESHOLD = 10
@@ -96,8 +98,21 @@ def ping_nodes():
                     follower_queue.remove(addr)
                     del ban_count[addr]
 
+def set_sequence_counter():
+    global sequence_counter
+    try:
+        last_document = follower_intervals_collection.find_one(sort=[('_id', pymongo.DESCENDING)])
+        last_key = list(last_document.keys())[1] if last_document else None
+        if last_key is None:
+            sequence_counter = 0
+        else:
+            sequence_counter = int(last_key)
+    except Exception as e:
+        print(e)
+
 def instruct_follower():
     global follower_queue, sequence_counter
+    set_sequence_counter()
     while True:
         if follower_queue:
             for follower in list(follower_queue):  # Create a copy of the list to avoid modification during iteration
@@ -106,7 +121,7 @@ def instruct_follower():
                     try:
                         sequence_counter += 1
                         follower_intervals[sequence_counter] = follower
-                        follower_intervals_collection.insert_one({sequence_counter: f"{follower.getpeername()[0]}:{follower.getpeername()[1]}"})
+                        follower_intervals_collection.insert_one({str(sequence_counter): f"{follower.getpeername()[0]}:{follower.getpeername()[1]}"})
                         follower.send(b"SEND_DATA")
                     except Exception as e:
                         print(f"{e}")

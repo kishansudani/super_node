@@ -21,20 +21,10 @@ def set_follower_rewards_dict():
     except Exception as e:
         print(e)
 
-def set_sequence_counter():
-    global sequence_counter
-    try:
-        if reward_collection.count_documents({}) != 0:
-            last_document = follower_intervals_collection.find_one(sort=[('_id', DESCENDING)])
-            last_key = list(last_document.keys())[0] if last_document else None
-        else:
-            sequence_counter = 0
-    except Exception as e:
-        print(e)
+
 
 def main():
     set_follower_rewards_dict()
-    set_sequence_counter()
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(("127.0.0.1", 5555))
     server.listen(5)
