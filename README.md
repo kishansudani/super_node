@@ -13,6 +13,7 @@
 - `Ping`:
     - Follower node pings to the super node with `version|data|node_address`.
     - Super node will send ping message to follower node in array line by line at perticular interval if follower node does not send proper response to the super, super node will give penalty to the follower node.
+    - Follower node must connect super node from specificed port only, if not super node will not connect to the follower node.
 
 - `Reward`:
     - If Super node will receive the ping from follower node then supernode will list this address into dict and reward him.
