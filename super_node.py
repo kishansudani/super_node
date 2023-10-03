@@ -1,8 +1,10 @@
+import socket
 import time
 
 import pymongo
 
 from database.client import new_client
+from datetime import datetime, timedelta
 
 BAN_THRESHOLD = 10
 PING_INTERVAL = 5
@@ -18,26 +20,41 @@ spam_count = {}
 follower_queue = []
 follower_rewards = {}
 follower_intervals = {}
+next_connection_time = {}
 
 reward_collection = new_client('rewards')
 follower_intervals_collection = new_client('intervals')
 
 
 def handle_client(client_socket, addr):
-    global ban_count, follower_rewards, sequence_counter, follower_intervals
+    global ban_count, follower_rewards, sequence_counter, follower_intervals, next_connection_time
+    isBanned = False
 
-    while True:
+    if addr in next_connection_time:
+        current_time = datetime.now()
+        if current_time < next_connection_time[addr]:
+            isBanned = True
+            client_socket.send(b"You are banned wait for cooldown")
+        else:
+            del next_connection_time[addr]
+    
+    while not isBanned:
         data = client_socket.recv(1024).decode()
 
         if client_socket != follower_intervals[sequence_counter]:
             if addr in spam_count.keys():
                 spam_count[addr] += 1 
             else:
-                spam_count[addr] = 0 
+                spam_count[addr] = 1 
 
             if spam_count[addr] == MAX_SPAM_PING:
-                spam_count[addr] = 0 
+                del spam_count[addr]
+                current_time = datetime.now()
+                unban_time = current_time + timedelta(minutes=10)
+                next_connection_time[addr] = unban_time
                 break
+
+            continue
 
         if not data:
             try:
@@ -123,6 +140,12 @@ def instruct_follower():
                         follower_intervals[sequence_counter] = follower
                         follower_intervals_collection.insert_one({str(sequence_counter): f"{follower.getpeername()[0]}:{follower.getpeername()[1]}"})
                         follower.send(b"SEND_DATA")
+                    except socket.error as e:
+                        if e.errno == 107:
+                            print(f"Disconnecting Follower node from super node: {follower.getpeername()[0]}:{follower.getpeername()[1]}")
+                            follower.close() 
+                            follower_queue.remove(follower) 
+
                     except Exception as e:
                         print(f"{e}")
 

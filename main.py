@@ -7,6 +7,11 @@ from api.supernode_api import app
 API_ADDRESS = '127.0.0.1'
 API_PORT = 5777
 
+SERVER_SOCKET_IP = '127.0.0.1'
+SERVER_SOCKET_PORT =  5555
+
+connection_ports = [5070, 5071]
+
 def set_follower_rewards_dict():
     global follower_rewards
     try:
@@ -26,10 +31,10 @@ def set_follower_rewards_dict():
 def main():
     set_follower_rewards_dict()
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(("127.0.0.1", 5555))
+    server.bind((SERVER_SOCKET_IP, SERVER_SOCKET_PORT))
     server.listen(5)
 
-    print("Super Node listening on port 5555")
+    print(f"Super Node listening on port {SERVER_SOCKET_PORT}")
 
     threading.Thread(target=ping_nodes).start()
     threading.Thread(target=instruct_follower).start()
@@ -39,16 +44,21 @@ def main():
     while True:
         try:
             client_socket, addr = server.accept()
-            print(f"Connection from {addr} established")
+            if addr[1] not in connection_ports:
+                print(f'{addr[0]} is trying to connect from {addr[1]}')
+                client_socket.send(b'PORT ERROR')
+                client_socket.close()
+            else:
+                print(f"Connection from {addr} established")
 
-            # Initialize ban count for the node
-            ban_count[addr] = 0
+                # Initialize ban count for the node
+                ban_count[addr] = 0
 
-            # Add client socket to the follower queue
-            follower_queue.append(client_socket)
+                # Add client socket to the follower queue
+                follower_queue.append(client_socket)
 
-            # Start a new thread to handle the client
-            threading.Thread(target=handle_client, args=(client_socket, addr)).start()
+                # Start a new thread to handle the client
+                threading.Thread(target=handle_client, args=(client_socket, addr)).start()
         except KeyboardInterrupt:
             break
 

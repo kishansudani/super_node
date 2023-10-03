@@ -1,5 +1,6 @@
 import hashlib
 import socket
+import sys
 import threading
 import requests
 from flask import Flask, jsonify
@@ -15,6 +16,7 @@ SUPER_NODE_IP = '127.0.0.1'
 SUPER_NODE_PORT = 5555
 SUPER_NODE_API_PORT = 5777
 super_node_url_claim_url = f"http://{SUPER_NODE_IP}:{SUPER_NODE_API_PORT}/claim"
+follower_address = ('localhost', 5070)
 
 
 def load_key_from_file(filename, is_private=True):
@@ -56,8 +58,14 @@ def createNodeKey():
 key = createNodeKey()
 
 def send_data():
-    global version
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    global version, follower_address
+    try:
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.bind(follower_address)
+    except Exception as e:
+        print("Couldn't connect : ", e)
+        return
+    
     while True:
         try:
             client.connect((SUPER_NODE_IP, SUPER_NODE_PORT))
@@ -67,6 +75,9 @@ def send_data():
 
     while True:
         data = client.recv(1024).decode()
+        if data == 'PORT ERROR':
+            print(f"Issue found {data}")
+            sys.exit(1)
         if data == "SEND_DATA":
             # Send data to main node
             data_to_send = f"{version}|{sdata}|{key}"  # Replace with your data
