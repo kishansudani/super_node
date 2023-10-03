@@ -38,7 +38,7 @@
 ### To Do:
 - [ ] Store everything into DB
 - [X] Check ping response from follower node that it's his turn to ping the super node or not, if not increase ban count.
-- [ ] Banned node can only allowed to join the system again after particular time.
+- [X] Banned node can only allowed to join the system again after particular time.
 - [ ] Create proper reward system and use case for reward system.
 - [ ] Add validator node structor
     - [ ] when user send data to the any node it forwards to the super node, super node will send data to validator node in sequnace.

@@ -61,8 +61,8 @@ def handle_client(client_socket, addr):
                 follower_rewards[formatted_addr] -= PENALTY_AMOUNT
                 reward_collection.update_one({"node": formatted_addr},{"$inc": {"amount": PENALTY_AMOUNT * -1}})
                 break
-            except:
-                break
+            except Exception as e:
+                print(e)
 
         try:
             received_version, _, address = data.split('|')
