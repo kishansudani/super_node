@@ -1,7 +1,7 @@
 import socket
 import threading
 
-from super_node import handle_client, instruct_follower, ping_nodes, ban_count, follower_queue, reward_collection, follower_rewards, sequence_counter, follower_intervals_collection
+from super_node import handle_client, instruct_follower, ping_nodes, follower_queue, reward_collection, follower_rewards, sequence_counter, follower_intervals_collection
 from api.supernode_api import app
 
 API_ADDRESS = '127.0.0.1'
@@ -51,8 +51,6 @@ def main():
             else:
                 print(f"Connection from {addr} established")
 
-                # Initialize ban count for the node
-                ban_count[addr] = 0
 
                 # Add client socket to the follower queue
                 follower_queue.append(client_socket)
