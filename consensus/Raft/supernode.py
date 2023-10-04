@@ -21,6 +21,12 @@ raft_members_intervals_collection = new_client('intervals')
 
 class RaftNode:
     def __init__(self, node_id):
+        """
+        RaftNode represents a node in the Raft consensus algorithm.
+
+        Parameters:
+            - node_id (str): Unique identifier for the Raft node.
+        """
         self.node_id = node_id
         self.term = 0
         self.voted_for = None
@@ -41,6 +47,10 @@ class RaftNode:
         return random.uniform(0.15, 0.3)
 
     def start_election(self):
+        """
+        Initiates a new election by sending request vote requests to all Raft members.
+        If the node receives votes from the majority, it becomes the leader.
+        """
         self.term += 1
         self.voted_for = self.node_id
         self.reset_election_timeout()
@@ -59,8 +69,15 @@ class RaftNode:
             self.reset_election()
 
     def send_request_vote_request(self, raft_members):
-        # Implement sending request for vote to a raft_members
-        # Return True if the vote is granted, False otherwise
+        """
+        Sends a request for vote to a Raft member.
+
+        Parameters:
+            - raft_member (Node): Raft member to which the request is sent.
+
+        Returns:
+            - bool: True if the vote is granted, False otherwise.
+        """
         try:
             raft_members_address = (raft_members.ip, raft_members.port)
 
@@ -93,11 +110,13 @@ class RaftNode:
         self.election_timeout = self.generate_random_timeout()
 
     def become_leader(self):
+        """Sets the node as the leader for the current term."""
         self.is_leader = True
         self.leader_id = self.node_id
         print(f"Node {self.node_id} became the leader for term {self.term}")
 
     def reset_election(self):
+        """Resets the election state when the node did not win the election."""
         self.voted_for = None
         self.is_leader = False
         print(f"Node {self.node_id} reset election for term {self.term}")
@@ -105,14 +124,32 @@ class RaftNode:
 
     def send_heartbeat(self):
         # Implement sending heartbeat to raft_members
+        """Sends heartbeat messages to maintain leadership."""
         pass
 
     def handle_append_entries(self, leader_id, entries, leader_commit):
         # Implement handling append entries from the leader
+        """
+        Handles append entries from the leader.
+
+        Parameters:
+            - leader_id (str): Identifier of the current leader.
+            - entries (list): Log entries to be appended.
+            - leader_commit (int): Commit index of the leader's log.
+        """
         pass
 
     def handle_request_vote(self, term, candidate_id):
+        """
+        Handles a request for vote from a candidate.
 
+        Parameters:
+            - term (int): Term of the candidate requesting the vote.
+            - candidate_id (str): Identifier of the candidate.
+
+        Returns:
+            - str: "VOTE_GRANTED" if the vote is granted, "VOTE_DENIED" otherwise.
+        """
         # Logic to handle request for vote from a candidate
         if term < self.current_term:
             return "VOTE_DENIED"  # Candidate's term is outdated
@@ -133,6 +170,16 @@ class RaftNode:
 
 
     def handle_client(self, client_socket, addr):
+        """
+        Handles incoming client connections.
+
+        Parameters:
+            - client_socket (socket.socket): Socket for communication with the client.
+            - addr (tuple): Address of the client.
+
+        Note: This method is a placeholder and should be extended based on the actual
+        communication protocol with clients.
+        """
         global raft_members_rewards, raft_members_intervals, next_connection_time
         while True:
             data = client_socket.recv(1024).decode()
@@ -149,6 +196,10 @@ class RaftNode:
     def ping_nodes(self):
         # Check for inactive nodes and handle Raft consensus
         # Implement Raft consensus logic here using RaftNode class
+        """
+        Checks for inactive nodes and handles Raft consensus.
+        Initiates an election if a Raft member doesn't respond and is the leader.
+        """
         while True:
             time.sleep(PING_INTERVAL)
 
@@ -172,12 +223,30 @@ class RaftNode:
     def has_responded(self, member):
         # Implement logic to check if the Raft member has responded recently
         # Return True if the member has responded, False otherwise
+        """
+        Checks if the Raft member has responded recently.
+
+        Parameters:
+            - member (Node): Raft member to check.
+
+        Returns:
+            - bool: True if the member has responded, False otherwise.
+        """
         pass
     
     def is_raft_leader(self, member):
         # Implement logic to check if the Raft member is the leader
         # You may need to query the leader information from your Raft protocol
         # Return True if the member is the leader, False otherwise
+        """
+        Checks if the Raft member is the leader.
+
+        Parameters:
+            - member (Node): Raft member to check.
+
+        Returns:
+            - bool: True if the member is the leader, False otherwise.
+        """
         try:
             member_address = (member.ip, member.port)
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -196,6 +265,15 @@ class RaftNode:
             return False
     
     def send_ping_request(self, member):
+        """
+        Sends a ping request to a Raft member.
+
+        Parameters:
+            - member (Node): Raft member to ping.
+
+        Returns:
+            - str: Response from the Raft member.
+        """
         try:
             member_address = (member.ip, member.port)
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -210,7 +288,12 @@ class RaftNode:
 
 
 def raft_node_worker(raft_node):
-    
+    """
+    Worker function for the Raft node thread.
+
+    Parameters:
+        - raft_node (RaftNode): Raft node instance.
+    """
     while True:
         time.sleep(1)
 
