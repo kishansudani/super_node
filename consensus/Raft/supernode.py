@@ -160,14 +160,12 @@ class RaftNode:
                         # Raft member responded, update last ping time
                         self.last_ping_time = time.time()
                     else:
-                        # Raft member is not responding
-                        if not self.has_responded(member):
                         # Raft member has not responded, check if it was the leader
-                            if self.is_raft_leader(member):
-                                print(f"Node {member} is the leader. No need to initiate a new election.")
-                            else:
-                                print(f"Node {member} not responding. Initiating election.")
-                                self.start_election()
+                        if self.is_raft_leader(member):
+                            print(f"Node {member} is the leader. No need to initiate a new election.")
+                        else:
+                            print(f"Node {member} not responding. Initiating election.")
+                            self.start_election()
                 except Exception as e:
                     print(f"Error pinging Raft member {member}: {e}")
     
@@ -180,7 +178,22 @@ class RaftNode:
         # Implement logic to check if the Raft member is the leader
         # You may need to query the leader information from your Raft protocol
         # Return True if the member is the leader, False otherwise
-        pass
+        try:
+            member_address = (member.ip, member.port)
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.connect(member_address)
+                ping_message = "PING"  # Assume PING is a heartbeat message
+                sock.send(ping_message.encode())
+                response = sock.recv(1024).decode()
+
+                # Assuming the response includes information about the current leader
+                # Modify this based on the actual structure of your heartbeat messages
+                _, _, _, is_leader_str = response.split('|')
+                
+                return is_leader_str.lower() == "true"  # Convert the string to a boolean
+        except Exception as e:
+            print(f"Error checking if {member_address} is the leader: {e}")
+            return False
     
     def send_ping_request(self, member):
         try:
