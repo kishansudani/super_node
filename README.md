@@ -53,6 +53,22 @@
     - [ ] Create Bootstrap node for new node(validator and follower)
 - [ ] Use GRPC to communicate between two node
 - [ ] Create Raft system for super node.
+- [ ] Consistency Improvements
+- [ ] Dynamic Cluster Membership
+- [ ] Snapshotting and Log Compaction
+- [ ] Concurrency Control
+- [ ] Failure Detection and Recovery
+- [ ] Secure Communication
+- [ ] Extended Client API
+- [ ] Performance Profiling and Optimization
+- [ ] Monitoring and Metrics
+- [ ] Automated Testing Framework
+- [ ] Quorum-Based Operations
+- [ ] Machine Learning for Performance Prediction
+- [ ] Integration with Container Orchestration
+- [ ] API Versioning and Compatibility
+- [ ] In-Memory Mode for Small Clusters
+- [ ] Documentation and Knowledge Base
 
 
 
